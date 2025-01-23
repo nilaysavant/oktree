@@ -107,7 +107,7 @@ where
         hit
     }
 
-    fn recursive_ray_cast(&self, node: NodeId, ray: &RayCast3d, hit: &mut HitResult) {
+    pub fn recursive_ray_cast(&self, node: NodeId, ray: &RayCast3d, hit: &mut HitResult) {
         // We use a heapless stack to loop through the nodes until we complete the cast however
         // if the stack becomes full then then we fallbackon recursive calls.
         let mut stack = HVec::<_, 32>::new();

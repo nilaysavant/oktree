@@ -315,7 +315,7 @@ where
         self.rfind(self.root, point)
     }
 
-    fn rfind(&self, mut node: NodeId, point: &TUVec3<U>) -> Option<ElementId> {
+    pub fn rfind(&self, mut node: NodeId, point: &TUVec3<U>) -> Option<ElementId> {
         loop {
             let ntype = self.nodes[node].ntype;
             return match ntype {
