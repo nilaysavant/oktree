@@ -175,9 +175,9 @@ where
     /// Walk through the nodes of the [`Octree`] with a custom intersection closure.
     ///
     /// IF closure returns `false` then the we break the walk.
-    pub fn rwalk_nodes_with<F>(&self, node: NodeId, what: &F)
+    pub fn rwalk_nodes_with<F>(&self, node: NodeId, what: &mut F)
     where
-        F: Fn(&Node<U>) -> bool,
+        F: FnMut(&Node<U>) -> bool,
     {
         // We use a heapless stack to loop through the nodes until we complete the intersect however
         // if the stack becomes full then then we fallbackon recursive calls.

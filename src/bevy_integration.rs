@@ -59,7 +59,7 @@
 
 use crate::{
     bounding::{Aabb, TUVec3, Unsigned},
-    node::NodeType,
+    node::{Node, NodeType},
     tree::Octree,
     ElementId, NodeId, Volume,
 };
@@ -155,6 +155,49 @@ where
         }
     }
 
+    pub fn recursive_ray_cast_with<F>(&self, node: NodeId, ray: &RayCast3d, what: &mut F)
+    where
+        F: FnMut(&Node<U>) -> bool,
+    {
+        // We use a heapless stack to loop through the nodes until we complete the cast however
+        // if the stack becomes full then then we fallbackon recursive calls.
+        let mut stack = HVec::<_, 32>::new();
+        stack.push(node).unwrap();
+        while let Some(node) = stack.pop() {
+            let n = &self.nodes[node];
+            let aabb: Aabb3d = n.aabb.into();
+            if ray.intersects(&aabb) {
+                match n.ntype {
+                    NodeType::Empty => {
+                        if !what(n) {
+                            continue;
+                        };
+                    }
+
+                    NodeType::Leaf(element) => {
+                        if !what(n) {
+                            continue;
+                        }
+                    }
+
+                    NodeType::Branch(branch) => {
+                        let mut iter = branch.children.iter();
+                        while let Some(child) = iter.next() {
+                            // If we can't push to the stack (to be processed on the next loop
+                            // iteration) then we fallback to recursive calls.
+                            if stack.push(*child).is_err() {
+                                self.recursive_ray_cast_with(*child, ray, what);
+                                for child in iter.by_ref() {
+                                    self.recursive_ray_cast_with(*child, ray, what);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /// Intersect [`Octree`] with [`Aabb3d`] or [`BoundingSphere`].
     ///
     /// Returns the [`vector`](Vec) of [`elements`](ElementId),
@@ -186,7 +229,7 @@ where
         elements
     }
 
-    fn rintersect<Volume: IntersectsVolume<Aabb3d>>(
+    pub fn rintersect<Volume: IntersectsVolume<Aabb3d>>(
         &self,
         node: NodeId,
         volume: &Volume,
