@@ -2,7 +2,7 @@
 
 use crate::{
     bounding::{Aabb, Unsigned},
-    node::NodeType,
+    node::{Node, NodeType},
     tree::Octree,
     ElementId, NodeId, Volume,
 };
@@ -67,7 +67,7 @@ where
         self.rintersect_with(self.root, &what, elements);
     }
 
-    fn rintersect_with<F>(&self, node: NodeId, what: &F, elements: &mut Vec<ElementId>)
+    pub fn rintersect_with<F>(&self, node: NodeId, what: &F, elements: &mut Vec<ElementId>)
     where
         F: Fn(&Aabb<U>) -> bool,
     {
@@ -131,7 +131,7 @@ where
         self.rintersect_with_for_each(self.root, &what, &mut actor);
     }
 
-    fn rintersect_with_for_each<F, F2>(&self, node: NodeId, what: &F, actor: &mut F2)
+    pub fn rintersect_with_for_each<F, F2>(&self, node: NodeId, what: &F, actor: &mut F2)
     where
         F: Fn(&Aabb<U>) -> bool,
         F2: FnMut(&T),
@@ -163,6 +163,47 @@ where
                                 self.rintersect_with_for_each(*child, what, actor);
                                 for child in iter.by_ref() {
                                     self.rintersect_with_for_each(*child, what, actor);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Walk through the nodes of the [`Octree`] with a custom intersection closure.
+    ///
+    /// IF closure returns `false` then the we break the walk.
+    pub fn rwalk_nodes_with<F>(&self, node: NodeId, what: &F)
+    where
+        F: Fn(&Node<U>) -> bool,
+    {
+        // We use a heapless stack to loop through the nodes until we complete the intersect however
+        // if the stack becomes full then then we fallbackon recursive calls.
+        let mut stack = HVec::<_, 32>::new();
+        stack.push(node).unwrap();
+        while let Some(node) = stack.pop() {
+            let n = self.nodes[node];
+            match n.ntype {
+                NodeType::Empty => (),
+
+                NodeType::Leaf(_) => {
+                    if !what(&n) {
+                        continue;
+                    };
+                }
+
+                NodeType::Branch(branch) => {
+                    if what(&n) {
+                        let mut iter = branch.children.iter();
+                        while let Some(child) = iter.next() {
+                            // If we can't push to the stack (to be processed on the next loop
+                            // iteration) then we fallback to recursive calls.
+                            if stack.push(*child).is_err() {
+                                self.rwalk_nodes_with(*child, what);
+                                for child in iter.by_ref() {
+                                    self.rwalk_nodes_with(*child, what);
                                 }
                             }
                         }
