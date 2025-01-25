@@ -177,7 +177,7 @@ where
     /// IF closure returns `false` then the we break the walk.
     pub fn rwalk_nodes_with<F>(&self, node: NodeId, what: &mut F)
     where
-        F: FnMut(&Node<U>) -> bool,
+        F: FnMut(NodeId, &Node<U>) -> bool,
     {
         // We use a heapless stack to loop through the nodes until we complete the intersect however
         // if the stack becomes full then then we fallbackon recursive calls.
@@ -187,19 +187,19 @@ where
             let n = self.nodes[node];
             match n.ntype {
                 NodeType::Empty => {
-                    if !what(&n) {
+                    if !what(node, &n) {
                         continue;
                     };
                 }
 
                 NodeType::Leaf(_) => {
-                    if !what(&n) {
+                    if !what(node, &n) {
                         continue;
                     };
                 }
 
                 NodeType::Branch(branch) => {
-                    if what(&n) {
+                    if what(node, &n) {
                         let mut iter = branch.children.iter();
                         while let Some(child) = iter.next() {
                             // If we can't push to the stack (to be processed on the next loop
