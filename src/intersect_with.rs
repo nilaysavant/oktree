@@ -186,7 +186,11 @@ where
         while let Some(node) = stack.pop() {
             let n = self.nodes[node];
             match n.ntype {
-                NodeType::Empty => (),
+                NodeType::Empty => {
+                    if !what(&n) {
+                        continue;
+                    };
+                }
 
                 NodeType::Leaf(_) => {
                     if !what(&n) {

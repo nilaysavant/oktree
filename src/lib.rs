@@ -233,6 +233,11 @@ use core::{
 };
 use prelude::Aabb;
 
+pub mod re_exports {
+    pub use heapless;
+    pub use smallvec;
+}
+
 extern crate alloc;
 /// Implement to represent your object as a point in a [`tree`](tree::Octree)
 ///
