@@ -24,15 +24,15 @@ where
     T: Volume<U = U>,
 {
     /// aabb used for clearing the octree
-    aabb: Option<Aabb<U>>,
+    pub aabb: Option<Aabb<U>>,
 
     /// [`Pool`] of stored elements. Access it by [`ElementId`]
-    pub(crate) elements: Pool<T>,
+    pub elements: Pool<T>,
 
     /// [`Pool`] of tree [`Nodes`](crate::node::Node). Access it by [`NodeId`]
-    pub(crate) nodes: Pool<Node<U>>,
+    pub nodes: Pool<Node<U>>,
 
-    pub(crate) root: NodeId,
+    pub root: NodeId,
 }
 
 impl<U, T> Octree<U, T>
