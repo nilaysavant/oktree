@@ -315,6 +315,10 @@ where
         self.rfind(self.root, point)
     }
 
+    pub fn find_node(&self, point: &TUVec3<U>) -> Option<NodeId> {
+        self.rfind_node(self.root, point)
+    }
+
     pub fn rfind(&self, mut node: NodeId, point: &TUVec3<U>) -> Option<ElementId> {
         loop {
             let ntype = self.nodes[node].ntype;
@@ -324,6 +328,28 @@ where
                 NodeType::Leaf(e) => {
                     if self.elements[e].volume().contains(point) {
                         Some(e)
+                    } else {
+                        None
+                    }
+                }
+
+                NodeType::Branch(ref branch) => {
+                    node = branch.find_child(point, self.nodes[node].aabb.center());
+                    continue;
+                }
+            };
+        }
+    }
+
+    pub fn rfind_node(&self, mut node: NodeId, point: &TUVec3<U>) -> Option<NodeId> {
+        loop {
+            let ntype = self.nodes[node].ntype;
+            return match ntype {
+                NodeType::Empty => None,
+
+                NodeType::Leaf(e) => {
+                    if self.elements[e].volume().contains(point) {
+                        Some(node)
                     } else {
                         None
                     }
